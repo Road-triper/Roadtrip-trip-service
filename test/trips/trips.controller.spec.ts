@@ -10,6 +10,8 @@ describe('TripsController', () => {
         findAll: jest.fn(),
         findOne: jest.fn(),
         create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
     };
 
     beforeEach(async () => {
@@ -142,7 +144,7 @@ describe('TripsController', () => {
     });
 
     describe('POST /trips', () => {
-        it('should create a new trip if all required params was provided', async () => {
+        it('should create a new trip if all required params were provided', async () => {
             const userId = 'foo-user';
             const createTripDto = {
                 name: 'Balkan Trip',
@@ -164,7 +166,7 @@ describe('TripsController', () => {
             expect(service.create).toHaveBeenCalledWith(createTripDto, userId);
         });
 
-        it('should create a new trip if all params was provided', async () => {
+        it('should create a new trip if all params were provided', async () => {
             const userId = 'foo-user';
             const createTripDto = {
                 name: 'Greece trip',
@@ -229,5 +231,15 @@ describe('TripsController', () => {
 
             expect(mockTripsService.create).not.toHaveBeenCalled();
         });
+    });
+
+    describe('PATCH /trips/id', () => {
+        it('should update a trip if all params were provided', async () => {});
+
+        it('should throw exception if trying to update non-updatable params', async () => {});
+    });
+
+    describe('DELETE /trips/id', () => {
+        it('should delete a trip if id was provided', async () => {});
     });
 });
