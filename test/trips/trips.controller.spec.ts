@@ -210,6 +210,24 @@ describe('TripsController', () => {
             },
         );
 
-        it('if endDate is smaller than a startDate');
+        it('should throw exceptiom if endDate is smaller than a startDate', async () => {
+            const userId = 'foo-user';
+            const createTripDto = {
+                name: 'Greece trip',
+                description: 'From the south to the north',
+                startDate: new Date('2025-08-26'),
+                endDate: new Date('2025-08-06'),
+                status: TripStatus.PLANNED,
+                isPublic: true,
+                tags: ['greece', 'car'],
+                waypoints: [new WaypointFactory.create()],
+            };
+
+            await expect(
+                controller.create(userId, createTripDto),
+            ).rejects.toThrow('endDate must be after startDate');
+
+            expect(mockTripsService.create).not.toHaveBeenCalled();
+        });
     });
 });
