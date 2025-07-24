@@ -234,12 +234,52 @@ describe('TripsController', () => {
     });
 
     describe('PATCH /trips/id', () => {
-        it('should update a trip if all params were provided', async () => {});
+        it('should update a trip if all params were provided', async () => {
+            const userId = 'foo-user';
+            const tripId = 'tripdId';
+            const updateTripDto = {
+                name: 'Updated name',
+                description: 'Updated description',
+                startDate: new Date('2026-08-26'),
+                endDate: new Date('2026-08-06'),
+                status: TripStatus.PLANNED,
+                isPublic: false,
+                tags: ['updated', 'tag'],
+                waypoint: [new WaypointFactory.create()],
+            };
 
-        it('should throw exception if trying to update non-updatable params', async () => {});
+            mockTripsService.update.mockResolvedValue(updateTripDto);
+
+            const result = await controller.update(tripId, userId);
+
+            expect(result).toEqual(updateTripDto);
+            expect(service.update).toHaveBeenCalledWith(tripId, userId);
+        });
+
+        it('should return an empty array if no param was given', async () => {
+            const userId = 'foo-user';
+            const tripId = 'tripId';
+
+            mockTripsService.update.mockResolvedValue([]);
+
+            const result = await controller.update(tripdId, userId);
+
+            expect(result).toEqual([]);
+            expect(service.update).toHaveBeenCalledWith(tripId, userId);
+        });
     });
 
     describe('DELETE /trips/id', () => {
-        it('should delete a trip if id was provided', async () => {});
+        it('should delete a trip if id was provided', async () => {
+            const userId = 'foo-user';
+            const tripId = 'tripId';
+
+            mockTripsService.delete.mockResolvedValue(true);
+
+            const result = await controller.delete(tripId, userId);
+
+            expect(result).toEqual([]);
+            expect(service.delete).toHaveBeenCalledWith(tripId, userId);
+        });
     });
 });
