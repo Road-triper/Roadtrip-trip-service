@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TripsController } from './trips.controller';
 import { TripsService } from './trips.service';
+import { TripStatus } from './enums/trip-status.enum';
+import { WaypointFactory } from './factories/waypoint.factory';
+import { NotFoundException } from '@nestjs/common';
 
 describe('TripsController', () => {
     let controller: TripsController;
@@ -15,7 +18,7 @@ describe('TripsController', () => {
     };
 
     beforeEach(async () => {
-        const module: TestingModule = await Test.creteTestingModule({
+        const module: TestingModule = await Test.createTestingModule({
             controllers: [TripsController],
             providers: [
                 {
@@ -126,14 +129,16 @@ describe('TripsController', () => {
             const result = await controller.findOne(tripId, userId);
 
             expect(result).toEqual(expectedTrip);
-            expect(service.findOne).toHaveBeenCalledWIth(trupId, userId);
+            expect(service.findOne).toHaveBeenCalledWIth(tripId, userId);
         });
 
         it('should return a 404 if trip has not been found', async () => {
             const userId = 'foo-user';
             const tripId = 'non-existent-trip';
 
-            mockTripsService.findOne.mockResolvedValue(404);
+            mockTripsService.findOne.mockRejectedValue(
+                new NotFoundException('Trip was not found'),
+            );
 
             await expect(controller.findOne(tripId, userId)).rejects.toThrow(
                 'Trip was not found',
@@ -176,7 +181,7 @@ describe('TripsController', () => {
                 status: TripStatus.PLANNED,
                 isPublic: true,
                 tags: ['greece', 'car'],
-                waypoints: [new WaypointFactory.create()],
+                waypoints: [WaypointFactory.create()],
             };
 
             const expectedTrip = {
@@ -207,7 +212,7 @@ describe('TripsController', () => {
                 const userId = 'foo-user';
 
                 await expect(
-                    controller.create(userId, createTripDto),
+                    controller.create(createTripDto, userId),
                 ).rejects.toThrow('Missing required parameter');
             },
         );
@@ -222,7 +227,7 @@ describe('TripsController', () => {
                 status: TripStatus.PLANNED,
                 isPublic: true,
                 tags: ['greece', 'car'],
-                waypoints: [new WaypointFactory.create()],
+                waypoints: [WaypointFactory.create()],
             };
 
             await expect(
@@ -236,24 +241,64 @@ describe('TripsController', () => {
     describe('PATCH /trips/id', () => {
         it('should update a trip if all params were provided', async () => {
             const userId = 'foo-user';
-            const tripId = 'tripdId';
+            const tripId = 'tripId';
             const updateTripDto = {
                 name: 'Updated name',
                 description: 'Updated description',
-                startDate: new Date('2026-08-26'),
-                endDate: new Date('2026-08-06'),
+                startDate: new Date('2026-08-06'),
+                endDate: new Date('2026-08-26'),
                 status: TripStatus.PLANNED,
                 isPublic: false,
                 tags: ['updated', 'tag'],
-                waypoint: [new WaypointFactory.create()],
+                waypoint: [WaypointFactory.create()],
             };
 
-            mockTripsService.update.mockResolvedValue(updateTripDto);
+            const expectedUpdatedTrip = {
+                id: tripId,
+                ...updateTripDto,
+                userId,
+            };
 
-            const result = await controller.update(tripId, userId);
+            mockTripsService.update.mockResolvedValue(expectedUpdatedTrip);
 
-            expect(result).toEqual(updateTripDto);
+            const result = await controller.update(
+                tripId,
+                updateTripDto,
+                userId,
+            );
+
+            expect(result).toEqual(expectedUpdatedTrip);
             expect(service.update).toHaveBeenCalledWith(tripId, userId);
+        });
+
+        it('should return updated trip even if only some fields are provided', async () => {
+            const userId = 'foo-user';
+            const tripId = 'tripId';
+            const updateTripDto = {
+                name: 'Partially updated name',
+            };
+
+            const expectedUpdatedTrip = {
+                id: tripId,
+                name: 'Partially updated name',
+                userId,
+                // ... other existing fields would remain unchanged
+            };
+
+            mockTripsService.update.mockResolvedValue(expectedUpdatedTrip);
+
+            const result = await controller.update(
+                tripId,
+                updateTripDto,
+                userId,
+            );
+
+            expect(result).toEqual(expectedUpdatedTrip);
+            expect(service.update).toHaveBeenCalledWith(
+                tripId,
+                updateTripDto,
+                userId,
+            );
         });
 
         it('should return an empty array if no param was given', async () => {
@@ -278,7 +323,22 @@ describe('TripsController', () => {
 
             const result = await controller.delete(tripId, userId);
 
-            expect(result).toEqual([]);
+            // Fixed expectation - delete should return success indicator, not empty array
+            expect(result).toBe(true);
+            expect(service.delete).toHaveBeenCalledWith(tripId, userId);
+        });
+
+        it('should throw NotFoundException if trip to delete does not exist', async () => {
+            const userId = 'foo-user';
+            const tripId = 'non-existent-trip';
+
+            mockTripsService.delete.mockRejectedValue(
+                new NotFoundException('Trip was not found'),
+            );
+
+            await expect(controller.delete(tripId, userId)).rejects.toThrow(
+                NotFoundException,
+            );
             expect(service.delete).toHaveBeenCalledWith(tripId, userId);
         });
     });
