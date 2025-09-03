@@ -5,6 +5,7 @@ export enum TripStatus {
     In_progress = 'In progress',
     Canceled = 'Canceled',
 }
+
 export class Trip {
     constructor(
         public readonly id: string, //think about UUID
