@@ -15,6 +15,10 @@ export enum TripStatus {
     Canceled = 'Canceled',
 }
 
+/**
+ * Example of class initializing : const trip = new Trip({userId: 'user-456'});
+ *
+ * */
 @Entity('trips')
 export class Trip {
     @PrimaryGeneratedColumn('uuid')
@@ -60,4 +64,8 @@ export class Trip {
 
     @UpdateDateColumn()
     public updatedAt: Date;
+
+    constructor(partial?: Partial<Trip>) {
+        Object.assign(this, partial);
+    }
 }
